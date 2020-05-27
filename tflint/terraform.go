@@ -9,6 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	hcl "github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/json"
 	"github.com/hashicorp/terraform/configs"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/zclconf/go-cty/cty"
@@ -47,6 +50,19 @@ func ParseTFVariables(vars []string, declVars map[string]*configs.Variable) (ter
 	}
 
 	return variables, nil
+}
+
+// ParseExpression is a wrapper for a function that parses JSON and HCL expressions
+func ParseExpression(src []byte, filename string, start hcl.Pos) (hcl.Expression, hcl.Diagnostics) {
+	if strings.HasSuffix(filename, ".tf") {
+		return hclsyntax.ParseExpression(src, filename, start)
+	}
+
+	if strings.HasSuffix(filename, ".tf.json") {
+		return json.ParseExpression(src, filename, start)
+	}
+
+	panic(fmt.Sprintf("Unexpected file: %s", filename))
 }
 
 func getTFDataDir() string {
